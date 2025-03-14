@@ -34,3 +34,5 @@ static inline uint arch_curr_cpu_num(void) {
   __asm__("mfspr %0, 1023" : "=r"(pir));
   return pir;
 }
+
+static inline ulong arch_cycle_count(void) { return 0; }
