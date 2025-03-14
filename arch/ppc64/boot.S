@@ -4,6 +4,11 @@ _start:
   lis %r1, __stack_bottom@h
   ori %r1, %r1, __stack_bottom@l
 
+  lis %r3, clear_bss@h
+  ori %r3, %r3, clear_bss@l
+  mtctr %r3
+  bctrl
+
   lis %r3, lk_main@h
   ori %r3, %r3, lk_main@l
   mtctr %r3
