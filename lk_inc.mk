@@ -1,0 +1,8 @@
+LOCAL_DIR := lk-ppc
+LKMAKEROOT := .
+LKROOT := lk
+LKINC := $(LOCAL_DIR)
+DEFAULT_PROJECT ?= lk-ppc
+BUILDROOT ?= .
+
+
