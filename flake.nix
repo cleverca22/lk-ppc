@@ -1,5 +1,6 @@
 {
   inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-23.05";
     utils.url = "github:numtide/flake-utils";
   };
   outputs = { self, nixpkgs, utils }:
@@ -15,7 +16,7 @@
       };
       ppc64 = import nixpkgs {
         crossSystem = {
-          config = "powerpc64-unknown-linux-gnuabielfv2";
+          config = "powerpc64-unknown-none-gnuabielfv2";
         };
         system = "x86_64-linux";
       };
