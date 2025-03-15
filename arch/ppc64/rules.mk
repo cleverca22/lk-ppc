@@ -2,8 +2,8 @@ LOCAL_DIR := $(GET_LOCAL_DIR)
 
 MODULE := $(LOCAL_DIR)
 TOOLCHAIN_PREFIX := powerpc64-unknown-linux-gnuabielfv2-
-#TOOLCHAIN_PREFIX := powerpc-none-eabi-
 ARCH_COMPILEFLAGS += -mcpu=powerpc64
+#ARCH_COMPILEFLAGS += -finstrument-functions
 # ARCH_LDFLAGS += -mcpu=powerpc64
 
 #LD := vc4-elf-ld

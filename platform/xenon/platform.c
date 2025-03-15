@@ -30,13 +30,13 @@ void platform_early_init(void) {
   printf("fb %p\n", framebuffer);
 }
 
-int cmd_gfx(int argc, const console_cmd_args *argv);
+//int cmd_gfx(int argc, const console_cmd_args *argv);
 void platform_init(void) {
-  console_cmd_args args[2] = {
-    [0] = { .str = "gfx" },
-    [1] = { .str = "rgb_bars" },
-  };
-  cmd_gfx(2, args);
+  //console_cmd_args args[2] = {
+  //  [0] = { .str = "gfx" },
+  //  [1] = { .str = "rgb_bars" },
+  //};
+  //cmd_gfx(2, args);
 }
 
 void platform_dputc(char c) {
@@ -119,7 +119,9 @@ int xeFbConvert(int x, int y, int width) {
 }
 
 void retile_framebuffer(uint starty, uint endy) {
+#ifndef WITH_LIB_GFXCONSOLE
   printf("retile_framebuffer(%d, %d)\n", starty, endy);
+#endif
   volatile uint32_t *fb = (uint32_t*)((1ULL << 63) | 0x1e000000);
   uint32_t *input = framebuffer;
   int stride = WIDTH;
@@ -144,7 +146,6 @@ void retile_framebuffer(uint starty, uint endy) {
 
 __WEAK status_t display_get_framebuffer(struct display_framebuffer *fb) {
   if (framebuffer == NULL) fb_init();
-  printf("framebuffer now at %p\n", framebuffer);
 
   const int w = WIDTH;
   const int h = HEIGHT;
