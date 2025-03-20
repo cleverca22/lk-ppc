@@ -12,15 +12,15 @@ struct arch_thread {
   uint64_t r18; // 48
   uint64_t r19; // 56
   uint64_t r20; // 64
-  uint64_t r21;
-  uint64_t r22;
-  uint64_t r23;
-  uint64_t r24;
-  uint64_t r25;
-  uint64_t r26;
-  uint64_t r27;
-  uint64_t r28;
-  uint64_t r29;
-  uint64_t r30;
-  uint64_t r31;
+  uint64_t r21; // 72
+  uint64_t r22; // 80
+  uint64_t r23; // 88
+  uint64_t r24; // 96
+  uint64_t r25; // 104
+  uint64_t r26; // 112
+  uint64_t r27; // 120
+  uint64_t r28; // 128
+  uint64_t r29; // 136
+  uint64_t r30; // 144
+  uint64_t r31; // 152
 };

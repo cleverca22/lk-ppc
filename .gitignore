@@ -1,2 +1,4 @@
 build-lk-ppc
 *.swp
+build-qemu-ppc64
+.direnv

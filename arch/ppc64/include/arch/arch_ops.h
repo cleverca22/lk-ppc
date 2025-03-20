@@ -12,14 +12,14 @@ static inline void arch_disable_ints(void) {
 
 static inline struct thread *arch_get_current_thread(void) {
   struct thread *thread_reg;
-  __asm__ volatile("add %0, %%r11, %1" : "=r"(thread_reg) : "r"(0));
+  __asm__ volatile("add %0, %%r13, %1" : "=r"(thread_reg) : "r"(0));
   //printf("arch_get_current_thread() == 0x%llx\n", (uint64_t)thread_reg);
   return thread_reg;
 }
 
 static inline void arch_set_current_thread(struct thread *t) {
   //printf("arch_set_current_thread(0x%llx)\n", (uint64_t)t);
-  __asm__ volatile ("add %%r11, %0, %1" : : "r"(t), "r"(0));
+  __asm__ volatile ("add %%r13, %0, %1" : : "r"(t), "r"(0));
 }
 
 static inline bool arch_ints_disabled(void) {

@@ -11,9 +11,11 @@ static void initial_thread_func(void) {
 }
 
 void arch_thread_initialize(thread_t *t) {
+  //printf("arch_thread_initialize t=%p, arch=%p\n", t, &t->arch);
   memset(&t->arch, 0, sizeof(struct arch_thread));
   t->arch.lr = (uint64_t)&initial_thread_func;
-  t->arch.sp = (uint64_t)((t->stack + t->stack_size) - 8);
+  t->arch.sp = (uint64_t)((t->stack + t->stack_size) - 32);
+  //printf("&lr %p\n", &t->arch.lr);
 }
 
 void arch_dump_thread(thread_t *t) {

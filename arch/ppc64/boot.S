@@ -4,6 +4,9 @@ _start:
   lis %r1, __stack_bottom@h
   ori %r1, %r1, __stack_bottom@l
 
+  lis %r2, .TOC.@h
+  ori %r2, %r2, .TOC.@l
+
   lis %r3, clear_bss@h
   ori %r3, %r3, clear_bss@l
   mtctr %r3
@@ -15,14 +18,25 @@ _start:
   bctr
   b .
 
+.section .text.hypercall
+.global do_hypercall4
+do_hypercall4:
+  b do_hypercall
+.global do_hypercall
+do_hypercall:
+  sc 1
+  blr
+
 .text
 .global ppc64_context_switch
 // r3, old thread
 // r4, new thread
 ppc64_context_switch:
+  nop
+  nop
   mflr %r5
   std %r5, 0(%r3)
-  std %r2, 8(%r3)
+  std %r1, 8(%r3)
   std %r14, 16(%r3)
   std %r15, 24(%r3)
   std %r16, 32(%r3)
@@ -43,7 +57,7 @@ ppc64_context_switch:
   std %r31, 152(%r3)
 
   ld %r5, 0(%r4)
-  ld %r2, 8(%r4)
+  ld %r1, 8(%r4)
   ld %r14, 16(%r4)
   ld %r15, 24(%r4)
   ld %r16, 32(%r4)

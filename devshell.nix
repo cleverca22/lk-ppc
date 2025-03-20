@@ -1,4 +1,9 @@
-{ stdenv, pkgsCross, path }:
+{ stdenv
+, enableDebugging
+, path
+, pkgsCross
+, qemu
+}:
 
 let
   ppc64 = import path {
@@ -14,6 +19,7 @@ stdenv.mkDerivation {
     #ppc64.stdenv.cc
     pkgsCross.ppc64.stdenv.cc
     pkgsCross.ppc-embedded.stdenvNoLibs.cc
+    (enableDebugging (qemu.override { hostCpuTargets = [ "ppc64-softmmu" "ppc-softmmu" ]; }))
   ];
   shellHook = ''
     unset CC OBJDUMP LD OBJCOPY
