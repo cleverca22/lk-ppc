@@ -1,6 +1,8 @@
+#include <arch/cpu_regs.h>
 #include <dev/display.h>
 #include <lk/err.h>
 #include <lk/reg.h>
+#include <platform/debug.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +39,8 @@ void platform_init(void) {
   //  [1] = { .str = "rgb_bars" },
   //};
   //cmd_gfx(2, args);
+  uint64_t x = pir_read();
+  printf("PIR 0x%llx\n", x);
 }
 
 void platform_dputc(char c) {

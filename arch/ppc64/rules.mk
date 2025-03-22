@@ -15,4 +15,6 @@ MODULE_SRCS += $(LOCAL_DIR)/boot.S $(LOCAL_DIR)/arch.c $(LOCAL_DIR)/thread.c $(L
 
 GLOBAL_DEFINES += PLATFORM_HAS_DYNAMIC_TIMER=1
 
+ARCH_OPTFLAGS := -O1
+
 include make/module.mk

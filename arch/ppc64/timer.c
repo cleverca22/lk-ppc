@@ -1,10 +1,11 @@
 #include <platform/timer.h>
+#include <arch/cpu_regs.h>
 #include <lk/err.h>
 
 static inline uint64_t mftb(void) {
   uint32_t l, u;
-  asm volatile ("mftbl %0" : "=r" (l));
-  asm volatile ("mftbu %0" : "=r" (u));
+  l = tbl_read();
+  u = tbu_read();
   return (((uint64_t)u) << 32) | l;
 }
 
