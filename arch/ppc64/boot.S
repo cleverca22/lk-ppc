@@ -7,15 +7,8 @@ _start:
   lis %r2, .TOC.@h
   ori %r2, %r2, .TOC.@l
 
-  lis %r3, clear_bss@h
-  ori %r3, %r3, clear_bss@l
-  mtctr %r3
-  bctrl
-
-  lis %r3, lk_main@h
-  ori %r3, %r3, lk_main@l
-  mtctr %r3
-  bctr
+  bl clear_bss
+  bl lk_main
   b .
 
 .section .text.hypercall
