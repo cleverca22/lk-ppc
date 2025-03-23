@@ -1,0 +1,138 @@
+when an irq/exception traps to kernel mode, state is stored to SSR0/SSR1 (status save restore)
+
+when the irq/exception traps to hypervisor, it instead uses HSSR0/HSSR1
+
+the `rfid` opcode will restore the state from those
+
+
+unordered interrupts (hw reset, machine check) can occur within an irq handler, and trash the SSR{0,1} before you can save them, so returning isnt safe
+bit 62 of (H)SSR1 indicates if it is safe to return or not, for the unordered interrupts
+  when you have saved enough state to be interrupted safely, you must set 62 to 1
+  when you are restoring (H)SSR{0,1}, clear bit 62 again
+  when most irq's are taken, bit 62 is cleared
+
+
+(H)SSR0 points to the "next" opcode the CPU should execute upon returning
+for some exception types (mmu write fault), the "next" opcode caused the fault and hasnt completed
+
+(H)SSR1
+  36:36 and 42:47, interrupt type
+  0:32, 37:41, and 48:63, a copy of the same? bits from MSR (machine status register)
+
+upon taking an irq, MSR.IR=0 MSR.DR=0, MSR.SF=1 (64bit mode)
+
+
+interrupts do not clear lwarx and ldarx reservations (atomics?)
+
+the irq handler should execute
+* `stwcx` to clear reservations
+* sync to ensure writes hit hw
+* isync or rfid  to ensure writes affect ifetch
+
+
+0x100, reset vector
+0x200, machine check exception
+0x300, data storage interrupt
+0x380, data segment
+0x400, instruction storage
+0x480, instruction segment
+0x500, external
+0x600, alignment
+0x700, program
+0x800, floating point unavailable
+0x900, decrementer
+0x980, hypervisor decrementer
+0xc00, syscall
+0xd00, trace
+0xf00, performance monitor
+
+
+
+40p:
+  make PROJECT=qemu-ppc64 && qemu-system-ppc64 -M 40p -kernel ~/apps/ppc/lk-ppc/build-qemu-ppc64/lk.bin -serial stdio -s -d in_asm,int
+  40p loads the raw kernel file to 0x1000000 (16mb), it ignores elf headers, and will blindly execute the elf header
+  -cpu 970: only 6xx bus is supported on this machine
+
+bamboo:
+  doesnt support POWERPC_MMU_BOOKE206, which is selected by -cpu e6500 and e5500
+  POWERPC_MMU_BOOKE only
+  -cpu 970: MMU model 65537 not supported by this machine
+
+g3beige:
+  Bus model not supported on OldWorld Mac machine
+mac99:
+  Bus model not supported on mac99 machine
+mpc8544ds:
+  `-M mpc8544ds -cpu e5500` starts execution
+pegasos2:
+  Incompatible CPU, only 6xx bus supported
+powernv:
+  invalid CPU model 'e5500-powerpc64-cpu' for powernv9 machine
+
+ppce500:
+  make PROJECT=qemu-ppc64 && qemu-system-ppc64 -M ppce500 -kernel ~/apps/ppc/lk-ppc/build-qemu-ppc64/lk.elf -serial stdio -s -d in_asm,int 2>&1 | uniq
+  ppce500 properly respects the load-addr in the elf, but its a 32bit only cpu, store double (std) fails
+  `-M ppce500 -cpu e6500` upgrades it to a 64bit capable cpu, but in x32 mode, so the uart isnt reachable
+  from ppce500_cpu_reset()
+    r1      (stack pointer) starts at 16mb-8byte
+    r3/arg1 has the DTB pointer
+    r4/r5   zero
+    r6/arg4 EPAPR_MAGIC (0x45504150)
+    r7/arg5 mmubooke_initial_mapsize (64mb)
+    r8/r9   zero
+
+pseries:
+  make PROJECT=qemu-ppc64 && qemu-system-ppc64 -M pseries -kernel ~/apps/ppc/lk-ppc/build-qemu-ppc64/lk.elf -serial stdio -s -d in_asm,int
+  pseries demands an elf, and will refuse to load a bin
+
+ref405ep:
+  `-M ref405ep -cpu e5500` will execute, but STD is an illegal opcode
+sam460ex:
+  Only MMU model BookE is supported by this machine
+virtex-ml507:
+  MMU model 9 not supported by this machine
+
+only the cpus (970, power5+, power7, power8, power9, power10) support the MSR.SF flag
+if the MMU model is (POWERPC_MMU_64B, POWERPC_MMU_2_03, POWERPC_MMU_2_06, POWERPC_MMU_2_07, POWERPC_MMU_3_00) will the cpu start with MSR.SF set
+  970     POWERPC_MMU_64B
+  power5+ POWERPC_MMU_2_03
+  power7  POWERPC_MMU_2_06
+  power8  POWERPC_MMU_2_07
+  power9/power10, POWERPC_MMU_3_00
+
+qemu  -machine dumpdtb=file.dtb is useful
+
+
+chapter 3, page 19 (book 3), has an SPR table
+
+MSR register
+  SF  0
+    0, 32bit mode
+    1, 64bit mode
+  HV  3
+  EE  48, external interrupt (and decrementer) enable
+  PR  49, problem state
+  FP  50, floating point available
+  ME  51, machine check interrupt enable
+  FE0 52, floating point exception mode 0
+  SE  53, single step trace enable
+  BE  54, branch trace enable
+  FE1 55, floating point exception mode 1
+  IR  58
+    0, instructions use a phys addr
+    1, instructions use a virtual addr? and can fault
+  DR  59, same as IR, but for data access
+  PMM 61, performance monitor mark
+  RI  62, recoverable interrupt
+  LE  63, little endian mode
+
+$qemu/target/ppc/cpu.h MSR_SF, has a good table of MSR bits
+
+https://github.com/qemu/qemu/blob/master/target/ppc/cpu.h#L1725
+the SPR list
+
+if MSR.HV==1 and EA[0] == 0, then HRMOR applies
+
+SDR1 points to the first level of the paging table
+
+translation goes as EA -> SLB lookup, -> Virtual -> paging tables -> Real addr
