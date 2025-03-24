@@ -30,6 +30,7 @@ static inline bool arch_ints_disabled(void) {
 }
 
 static inline uint arch_curr_cpu_num(void) {
+  return 0;
   uint64_t pir;
   __asm__("mfspr %0, 1023" : "=r"(pir));
   return pir;

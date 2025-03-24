@@ -106,25 +106,25 @@ qemu  -machine dumpdtb=file.dtb is useful
 chapter 3, page 19 (book 3), has an SPR table
 
 MSR register
-  SF  0
+  SF  0   63
     0, 32bit mode
     1, 64bit mode
-  HV  3
-  EE  48, external interrupt (and decrementer) enable
-  PR  49, problem state
-  FP  50, floating point available
-  ME  51, machine check interrupt enable
-  FE0 52, floating point exception mode 0
-  SE  53, single step trace enable
-  BE  54, branch trace enable
-  FE1 55, floating point exception mode 1
-  IR  58
+  HV  3   20
+  EE  48  15, external interrupt (and decrementer) enable
+  PR  49  14, problem state
+  FP  50  13, floating point available
+  ME  51  12, machine check interrupt enable
+  FE0 52  11, floating point exception mode 0
+  SE  53  10, single step trace enable
+  BE  54  9 , branch trace enable
+  FE1 55  8 , floating point exception mode 1
+  IR  58  5
     0, instructions use a phys addr
     1, instructions use a virtual addr? and can fault
-  DR  59, same as IR, but for data access
-  PMM 61, performance monitor mark
-  RI  62, recoverable interrupt
-  LE  63, little endian mode
+  DR  59  4 , same as IR, but for data access
+  PMM 61  2 , performance monitor mark
+  RI  62  1 , recoverable interrupt
+  LE  63  0 , little endian mode
 
 $qemu/target/ppc/cpu.h MSR_SF, has a good table of MSR bits
 

@@ -1,19 +1,103 @@
 #include <app.h>
+#include <arch/cpu_regs.h>
 #include <lib/cbuf.h>
 #include <lib/io.h>
+#include <lk/console_cmd.h>
 #include <lk/reg.h>
 #include <platform/debug.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <arch/hypercalls.h>
 
 //#define UART_DR 0x3f8
 #define UART_DR (0xe0000000ULL + 0x4500ULL + 0)
 
-// look for spapr_register_hypercall() in qemu
-#define H_GET_TERM_CHAR         0x54
-#define H_PUT_TERM_CHAR         0x58
+static int cmd_p(int argc, const console_cmd_args *argv);
+static int cmd_x(int argc, const console_cmd_args *argv);
 
-void do_hypercall4(uint32_t opcode, uint64_t a, uint64_t b, uint64_t c, uint64_t d);
+STATIC_COMMAND_START
+STATIC_COMMAND("p", "", &cmd_p)
+STATIC_COMMAND("x", "", &cmd_x)
+STATIC_COMMAND_END(platform);
+
+static int cmd_p(int argc, const console_cmd_args *argv) {
+  puts("hello");
+#define printreg(name) printf(#name ": 0x%016llx\n", name ## _read())
+  printreg(xer);
+  printreg(lr);
+  printreg(ctr);
+  printreg(dsisr);
+  printreg(dar);
+  printreg(sdr1);
+  printreg(uctrl);
+  //printreg(ctrl);
+  printreg(pvr);
+  printreg(tbl);
+  printreg(tbu);
+  printreg(pir);
+  return 0;
+}
+
+typedef struct {
+  uint64_t pte0, pte1;
+} pte_t;
+
+typedef struct {
+  pte_t e[8];
+} pteg_t;
+
+static void map_page(uint64_t virtual, uint64_t physical) {
+  uint64_t vpn = virtual >> 12;
+  uint64_t avpn = vpn >> 11;
+  uint64_t pte0 = (avpn << 7) | 1;
+  uint64_t pte1 = physical | 0x10 | 2;
+  uint64_t hash = vpn; // TODO, masking
+#if 0
+  pteg_t *p = page_table;
+  p[hash].e[0].pte0 = pte0;
+  p[hash].e[0].pte1 = pte1;
+#else
+  puts("hentering");
+  uint64_t ret = h_enter(0, (0&7) | (hash << 3), pte0, pte1);
+  printf("ret 0x%lx\n", ret);
+#endif
+  printf("PTE[0x%lx] = 0x%lx 0x%lx\n", hash, pte0, pte1);
+}
+
+#if 0
+void mmu_setup(void) {
+  void *page_table = memalign(256<<10, 256<<10);
+  memset(page_table, 0, 256<<10);
+  printf("%p\n", page_table);
+  sdr1_write(page_table);
+}
+#else
+void mmu_setup(void) {
+}
+#endif
+
+static int cmd_x(int argc, const console_cmd_args *argv) {
+  mmu_setup();
+
+
+  for (uint64_t i = 16 << 20; i < 17<<20; i += 4096) {
+    uint64_t virtual = i;
+    uint64_t physical = i;
+    map_page(virtual, physical);
+  }
+
+  slbmte(0, 1, 1, 0, 0, 0, 0, 1, 0);
+
+  msr_write(1ULL<<63 | 1ULL<<4 | 1ULL<<5);
+
+  //while (true) {
+  //}
+
+  //sdr1_write(0);
+  //free(page_table);
+  return 0;
+}
 
 void platform_dputc(char c) {
   //*REG8(UART_DR) = c;
@@ -54,6 +138,9 @@ void hyper_serial_rx_loop(const struct app_descriptor *, void *) {
 }
 
 // TODO, H_CEDE for arch_idle?
+// also, bit 45/18, MSR_POW, can trigger sleep
+// SPR_HID0 can contain a deepnap/doze/nap flag
+// see check_pow_970
 
 
 APP_START(platform_rx)

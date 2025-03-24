@@ -1,6 +1,7 @@
+#include <lk/asm.h>
+
 .section .text.boot
-.global _start
-_start:
+FUNCTION(_start)
   lis %r1, __stack_bottom@h
   ori %r1, %r1, __stack_bottom@l
 
@@ -10,23 +11,20 @@ _start:
   bl clear_bss
   bl lk_main
   b .
+END_FUNCTION(_start)
 
 .section .text.hypercall
 .global do_hypercall4
-do_hypercall4:
-  b do_hypercall
 .global do_hypercall
+do_hypercall4:
 do_hypercall:
   sc 1
   blr
 
 .text
-.global ppc64_context_switch
+FUNCTION(ppc64_context_switch)
 // r3, old thread
 // r4, new thread
-ppc64_context_switch:
-  nop
-  nop
   mflr %r5
   std %r5, 0(%r3)
   std %r1, 8(%r3)
@@ -71,3 +69,4 @@ ppc64_context_switch:
   ld %r31, 152(%r4)
   mtlr %r5
   blr
+END_FUNCTION(ppc64_context_switch)

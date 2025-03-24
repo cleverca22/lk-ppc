@@ -2,6 +2,7 @@
 , enableDebugging
 , path
 , pkgsCross
+, nodejs
 , qemu
 }:
 
@@ -18,6 +19,7 @@ stdenv.mkDerivation {
   nativeBuildInputs = [
     #ppc64.stdenv.cc
     pkgsCross.ppc64.stdenv.cc
+    nodejs
     pkgsCross.ppc-embedded.stdenvNoLibs.cc
     (enableDebugging (qemu.override { hostCpuTargets = [ "ppc64-softmmu" "ppc-softmmu" ]; }))
   ];

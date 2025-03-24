@@ -1,0 +1,23 @@
+// look for spapr_register_hypercall() in qemu
+
+all hypercalls are initiated with an `sc 1` opcode
+
+prior to initiating that, r3 must be loaded with the hypercall number
+on return, r3 is a status code
+
+H_GET_TERM_CHAR:
+  reads up to 16 characters from serial port
+  inputs:
+    r4, the serial port index
+  outputs:
+    r3, status
+    r4, number of bytes read
+    r5/r6, 16 bytes packed into a pair of 64bit regs
+
+H_ENTER/0x8:
+  writes to a PTE
+  inputs:
+    r4, flags
+    r5, ptex (hashtable index, and group index)
+    r6, pteh
+    r7, ptel
