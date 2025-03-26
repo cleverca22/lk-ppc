@@ -47,8 +47,7 @@ typedef struct {
   pte_t e[8];
 } pteg_t;
 
-static void map_page(uint64_t virtual, uint64_t physical) {
-  uint64_t vpn = virtual >> 12;
+static void map_page(uint64_t vpn, uint64_t physical) {
   uint64_t avpn = vpn >> 11;
   uint64_t pte0 = (avpn << 7) | 1;
   uint64_t pte1 = physical | 0x10 | 2;
@@ -77,14 +76,22 @@ void mmu_setup(void) {
 }
 #endif
 
+extern uint8_t _start, _end;
+
 static int cmd_x(int argc, const console_cmd_args *argv) {
   mmu_setup();
 
+  uint64_t virt_start = (uint64_t)&_start;
+  uint64_t virt_end = ROUNDUP((uint64_t)&_end, 4096);
+  uint64_t phys_start = 16 << 20;
 
-  for (uint64_t i = 16 << 20; i < 17<<20; i += 4096) {
-    uint64_t virtual = i;
-    uint64_t physical = i;
-    map_page(virtual, physical);
+  virt_end += 1<<20; // since activating late, the heap has grown
+
+  printf("mapping 0x%llx to 0x%llx->0x%llx\n", phys_start, virt_start, virt_end);
+  printf("vpn range 0x%llx -> 0x%llx\n", virt_start>>12, virt_end >> 12);
+
+  for (uint64_t vpn = virt_start >> 12; vpn < (virt_end>>12); vpn++) {
+    map_page(vpn, vpn << 12);
   }
 
   slbmte(0, 1, 1, 0, 0, 0, 0, 1, 0);
