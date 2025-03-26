@@ -60,9 +60,9 @@ static void map_page(uint64_t virtual, uint64_t physical) {
 #else
   puts("hentering");
   uint64_t ret = h_enter(0, (0&7) | (hash << 3), pte0, pte1);
-  printf("ret 0x%lx\n", ret);
+  printf("ret 0x%llx\n", ret);
 #endif
-  printf("PTE[0x%lx] = 0x%lx 0x%lx\n", hash, pte0, pte1);
+  printf("PTE[0x%llx] = 0x%llx 0x%llx\n", hash, pte0, pte1);
 }
 
 #if 0

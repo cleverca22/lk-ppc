@@ -1,7 +1,7 @@
 #include <arch.h>
 #include <lk/debug.h>
 
-void arch_idle(void) {
+void __WEAK arch_idle(void) {
     asm volatile("nop");
 }
 

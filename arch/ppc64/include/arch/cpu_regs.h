@@ -63,5 +63,5 @@ make_spr(sdr1, 25); // the physical addr that the root page table starts at
 make_spr(uctrl, 136); // 0x88
 make_spr(ctrl, 152); // 0x98
 make_spr(pvr, 287);
-make_spr(hid0, 1008); // 1<<22=nap, 1<<23=doze, 1<<24=deepnap
+make_spr(hid0, 1008); //0x3f0, 1<<22=nap, 1<<23=doze, 1<<24=deepnap
 make_spr(pir, 1023);

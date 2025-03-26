@@ -5,17 +5,28 @@ FUNCTION(_start)
   lis %r1, __stack_bottom@h
   ori %r1, %r1, __stack_bottom@l
 
+  mr %r14, %r3
+  mr %r15, %r4
+  mr %r16, %r5
+  mr %r17, %r6
+
   lis %r2, .TOC.@h
   ori %r2, %r2, .TOC.@l
 
   bl clear_bss
+
+  mr %r3, %r14
+  mr %r4, %r15
+  mr %r5, %r16
+  mr %r6, %r17
+
   bl lk_main
   b .
 END_FUNCTION(_start)
 
 .section .text.hypercall
-.global do_hypercall4
 .global do_hypercall
+.global do_hypercall4
 do_hypercall4:
 do_hypercall:
   sc 1
