@@ -13,6 +13,28 @@
 //#define UART_DR 0x3f8
 #define UART_DR (0xe0000000ULL + 0x4500ULL + 0)
 
+#if WITH_KERNEL_VM
+#include <kernel/vm.h>
+
+struct mmu_initial_mapping mmu_initial_mappings[] = {
+  {
+    .phys = 16<<20,
+    .virt = 16<<20,
+    .size = 2<<20,
+    .flags = 0,
+    .name = "memory",
+  },
+  { 0 }
+};
+
+static pmm_arena_t arena = {
+    .name = "sdram",
+    .base = 16 << 20,
+    .size = 16 << 20,
+    .flags = PMM_ARENA_FLAG_KMAP,
+};
+#endif
+
 static int cmd_p(int argc, const console_cmd_args *argv);
 static int cmd_x(int argc, const console_cmd_args *argv);
 
@@ -20,6 +42,10 @@ STATIC_COMMAND_START
 STATIC_COMMAND("p", "", &cmd_p)
 STATIC_COMMAND("x", "", &cmd_x)
 STATIC_COMMAND_END(platform);
+
+void platform_early_init(void) {
+  pmm_add_arena(&arena);
+}
 
 static int cmd_p(int argc, const console_cmd_args *argv) {
   puts("hello");

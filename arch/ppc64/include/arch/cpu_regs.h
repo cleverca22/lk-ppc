@@ -22,7 +22,7 @@ static inline void name ## _write(uint64_t value) { \
 }
 
 static inline void msr_write(uint64_t value) {
-  __asm__ volatile ("sync\nmtmsrd %0, 0\nsync\nisync": : "r"(value));
+  __asm__ volatile ("tlbie %%r0\nsync\nmtmsrd %0, 0\ntlbie %%r0\nsync\nisync": : "r"(value));
 }
 
 static inline void slbmte(uint64_t vsid, bool ks, bool kp, bool n, bool l, bool c, uint64_t esid, bool v, uint16_t index) {
@@ -52,7 +52,7 @@ make_spr(dsisr, 18);
 // data storage interupt status register, why a load/store causd a fault
 make_spr(dar, 19);
 // data address register, the addr that caused a fault
-make_spr(sdr1, 25); // the physical addr that the root page table starts at
+make_spr(sdr1, 25); // 0x19, the physical addr that the root page table starts at
 // 0:4, htable size, must be 0-28
 // addr must be 256kb aligned
 // at minimum:
@@ -63,5 +63,8 @@ make_spr(sdr1, 25); // the physical addr that the root page table starts at
 make_spr(uctrl, 136); // 0x88
 make_spr(ctrl, 152); // 0x98
 make_spr(pvr, 287);
+
+make_spr(lpcr, 318); // 0x13e
+
 make_spr(hid0, 1008); //0x3f0, 1<<22=nap, 1<<23=doze, 1<<24=deepnap
 make_spr(pir, 1023);

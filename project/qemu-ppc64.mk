@@ -12,3 +12,5 @@ MODULES += lib/debugcommands
 
 DEBUG := 2
 WITH_TESTS := false
+
+WITH_KERNEL_VM := 1
