@@ -1,4 +1,4 @@
 LOCAL_DIR := $(GET_LOCAL_DIR)
 
-PLATFORM := xenon
+PLATFORM := xenon64
 ARCH := ppc64

@@ -2,8 +2,8 @@ LOCAL_DIR := $(GET_LOCAL_DIR)
 
 MODULE := $(LOCAL_DIR)
 TOOLCHAIN_PREFIX := powerpc64-unknown-linux-gnuabielfv2-
-ARCH_COMPILEFLAGS += -mcpu=powerpc64 -m64
-ARCH_LDFLAGS += -melf64ppc
+ARCH_COMPILEFLAGS += -mcpu=powerpc -m32 -static-libgcc -lgcc
+ARCH_LDFLAGS += -melf32ppc
 
 MODULE_SRCS += $(LOCAL_DIR)/boot.S $(LOCAL_DIR)/arch.c $(LOCAL_DIR)/thread.c $(LOCAL_DIR)/timer.c
 
