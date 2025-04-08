@@ -1,8 +1,8 @@
 LOCAL_DIR := $(GET_LOCAL_DIR)
 
 MODULE := $(LOCAL_DIR)
-ARCH_COMPILEFLAGS += -mcpu=powerpc -m32 -static-libgcc -lgcc
-GLOBAL_MODULE_LDFLAGS += -melf32ppc
+ARCH_COMPILEFLAGS += -mcpu=powerpc64 -m64
+GLOBAL_MODULE_LDFLAGS += -melf64ppc
 
 MEMBASE := 0x10000000
 MEMSIZE := 0x10000000

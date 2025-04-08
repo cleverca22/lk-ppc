@@ -1,6 +1,6 @@
 LOCAL_DIR := $(GET_LOCAL_DIR)
 
-TARGET := xenon-ppc-stage1
+TARGET := xenon-ppc64-stage1
 
 MODULES += app/shell
 #MODULES += app/tests
