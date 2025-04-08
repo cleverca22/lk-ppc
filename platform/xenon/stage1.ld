@@ -45,7 +45,7 @@ SECTIONS {
   __bss_end = .;
 
   .stack : ALIGN(4) {
-    . += 0xE000000;
+    . += 8k;
     __stack_bottom = .;
   } >ram
   _end = .;

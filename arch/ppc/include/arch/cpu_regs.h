@@ -3,37 +3,37 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define makereg(from, to, name) static inline uint32_t name ## _read(void) { \
-  uint32_t t; \
+#define makereg(from, to, name) static inline uint64_t name ## _read(void) { \
+  uint64_t t; \
   __asm__ volatile (#from " %0" : "=r"(t)); \
   return t; \
 } \
-static inline void name ## _write(uint32_t value) { \
+static inline void name ## _write(uint64_t value) { \
   __asm__ volatile (#to " %0" : : "r"(value)); \
 }
 
-#define make_spr(name, id) static inline uint32_t name ## _read(void) { \
-  uint32_t t; \
+#define make_spr(name, id) static inline uint64_t name ## _read(void) { \
+  uint64_t t; \
   __asm__ volatile ("mfspr %0, " #id : "=r"(t)); \
   return t; \
 } \
-static inline void name ## _write(uint32_t value) { \
+static inline void name ## _write(uint64_t value) { \
   __asm__ volatile ("mtspr " #id ", %0" : : "r"(value)); \
 }
 
-static inline void msr_write(uint32_t value) {
+static inline void msr_write(uint64_t value) {
   __asm__ volatile ("tlbie %%r0\nsync\nmtmsrd %0, 0\ntlbie %%r0\nsync\nisync": : "r"(value));
 }
 
-static inline void slbmte(uint32_t vsid, bool ks, bool kp, bool n, bool l, bool c, uint32_t esid, bool v, uint16_t index) {
-  uint32_t rs = (vsid << 12);
+static inline void slbmte(uint64_t vsid, bool ks, bool kp, bool n, bool l, bool c, uint64_t esid, bool v, uint16_t index) {
+  uint64_t rs = (vsid << 12);
   if (ks) rs |= 1ULL << 11;
   if (kp) rs |= 1ULL << 10;
   if (n) rs |= 1ULL << 9;
   if (l) rs |= 1ULL << 8;
   if (c) rs |= 1ULL << 7;
 
-  uint32_t rb = esid << 28;
+  uint64_t rb = esid << 28;
   if (v) rb |= 1ULL << 27;
   rb |= index;
 
