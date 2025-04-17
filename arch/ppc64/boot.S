@@ -2,6 +2,10 @@
 
 .section .text.boot
 FUNCTION(_start)
+  b skip_args
+  .skip (0x60 - 4)
+  b .
+skip_args:
   lis %r1, __stack_bottom@h
   ori %r1, %r1, __stack_bottom@l
 
