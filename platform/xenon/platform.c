@@ -13,14 +13,16 @@
 #include <lib/gfx.h>
 #endif
 
-#define UART_BASE 0xEA001000ULL
+#define UART_BASE ((0x80000200ULL << 32) | 0xEA001000ULL)
 
 static int cmd_p(int argc, const console_cmd_args *argv);
 static int cmd_x(int argc, const console_cmd_args *argv);
+static int cmd_f(int argc, const console_cmd_args *argv);
 
 STATIC_COMMAND_START
 STATIC_COMMAND("p", "", &cmd_p)
 STATIC_COMMAND("x", "", &cmd_x)
+STATIC_COMMAND("f", "", &cmd_f)
 STATIC_COMMAND_END(platform);
 
 void init_uart(void) {
@@ -88,7 +90,9 @@ struct ati_info {
 } __attribute__ ((__packed__));
 
 void fb_init(void) {
-  framebuffer = malloc(WIDTH * HEIGHT * 4);
+  uint32_t size = WIDTH * HEIGHT * 4;
+  framebuffer = malloc(size);
+  bzero(framebuffer, size);
   printf("allocated fb to %p\n", framebuffer);
   struct ati_info *ai = (struct ati_info*)0xec806100ULL;
   printf("base: 0x%x\n", ai->base);
@@ -173,9 +177,10 @@ __WEAK status_t display_get_framebuffer(struct display_framebuffer *fb) {
 static int cmd_p(int argc, const console_cmd_args *argv) {
   volatile uint32_t *fb = (uint32_t*)((1ULL << 63) | 0x1e000000);
   int index = argv[1].u;
-  fb[index] = 0x0000ff00;
+  //fb[index] = 0x0000ff00;
   puts("hello");
 #define printreg(name) printf(#name ": 0x%016llx\n", name ## _read())
+  printreg(hrmor);
   printreg(xer);
   printreg(lr);
   printreg(ctr);
@@ -244,5 +249,17 @@ static int cmd_x(int argc, const console_cmd_args *argv) {
   const uint64_t esid = 1; // TODO
   slbmte(vsid, 1, 1, 0, 0, 0, esid, 1, 0);
   msr_write(1ULL<<63 | 1ULL<<60 | 1ULL<<4 | 1ULL<<5);
+  return 0;
+}
+
+void test1(uint64_t *a, uint64_t *b, uint64_t *c);
+
+static int cmd_f(int argc, const console_cmd_args *argv) {
+  uint64_t a[] = { 0x11, 0x22 };
+  uint64_t b[3];
+  uint64_t c[3];
+  test1(a, b, c);
+  printf("0x%llx 0x%llx 0x%llx\n", b[0], b[1], b[2]);
+  printf("0x%llx 0x%llx 0x%llx\n", c[0], c[1], c[2]);
   return 0;
 }

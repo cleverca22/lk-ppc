@@ -85,3 +85,16 @@ FUNCTION(ppc64_context_switch)
   mtlr %r5
   blr
 END_FUNCTION(ppc64_context_switch)
+
+FUNCTION(test1)
+  lfd %f1, 0(%r3)
+  lfd %f2, 8(%r3)
+  stfd %f0, 0(%r4)
+  stfd %f1, 8(%r4)
+  stfd %f2, 16(%r4)
+  fadd %f0, %f1, %f2
+  stfd %f0, 0(%r5)
+  stfd %f1, 8(%r5)
+  stfd %f2, 16(%r5)
+  blr
+END_FUNCTION(test1)

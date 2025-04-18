@@ -64,6 +64,8 @@ make_spr(uctrl, 136); // 0x88
 make_spr(ctrl, 152); // 0x98
 make_spr(pvr, 287);
 
+make_spr(hrmor, 313); // HRMOR
+
 make_spr(lpcr, 318); // 0x13e
 
 make_spr(hid0, 1008); //0x3f0, 1<<22=nap, 1<<23=doze, 1<<24=deepnap
