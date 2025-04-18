@@ -1,8 +1,11 @@
 #include <arch/cpu_regs.h>
 #include <dev/display.h>
 #include <lk/console_cmd.h>
+#include <lk/debug.h>
 #include <lk/err.h>
 #include <lk/reg.h>
+#include <platform.h>
+#include <arch/ops.h>
 #include <platform/debug.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -13,21 +16,27 @@
 #include <lib/gfx.h>
 #endif
 
-#define UART_BASE ((0x80000200ULL << 32) | 0xEA001000ULL)
+#define UART_BASE ((0x80000200ULL << 32) | 0xEA001010ULL)
+#define SMC_BASE ((0x80000200ULL << 32) | 0xEA001080ULL)
+
+#define IO_BSWAP_READ(s, x) __builtin_bswap ## s(*REG ## s((x)))
+#define IO_BSWAP_WRITE(s, x, v) *REG ## s((x)) = __builtin_bswap ## s((v))
 
 static int cmd_p(int argc, const console_cmd_args *argv);
+static int cmd_smc(int argc, const console_cmd_args *argv);
 static int cmd_x(int argc, const console_cmd_args *argv);
 static int cmd_f(int argc, const console_cmd_args *argv);
 
 STATIC_COMMAND_START
 STATIC_COMMAND("p", "", &cmd_p)
+STATIC_COMMAND("smc", "Sends a message to the SMC", &cmd_smc)
 STATIC_COMMAND("x", "", &cmd_x)
 STATIC_COMMAND("f", "", &cmd_f)
 STATIC_COMMAND_END(platform);
 
 void init_uart(void) {
   // Set UART to 115400, 8, N, 1
-  *REG32(UART_BASE+0x1C) = 0xE6010000;
+  *REG32(UART_BASE+0x0C) = 0xE6010000;
 }
 
 uint32_t *framebuffer = NULL;
@@ -49,14 +58,105 @@ void platform_init(void) {
 }
 
 void platform_dputc(char c) {
-  while (!((*REG32(UART_BASE+0x18)) & (1<<25)));
-  *REG32(UART_BASE+0x14) = (c << 24) & 0xFF000000;
+  while (!((*REG32(UART_BASE+0x08)) & (1<<25)));
+  *REG32(UART_BASE+0x04) = (c << 24) & 0xFF000000;
+}
+
+void smc_send_message(const uint8_t *msg) {
+  /*
+  while (!(read32(SMC_BASE + 0x84) & 4));
+	write32(SMC_BASE + 0x84, 4);
+	write32n(SMC_BASE + 0x80, *(uint32_t*)(msg + 0));
+	write32n(SMC_BASE + 0x80, *(uint32_t*)(msg + 4));
+	write32n(SMC_BASE + 0x80, *(uint32_t*)(msg + 8));
+	write32n(SMC_BASE + 0x80, *(uint32_t*)(msg + 12));
+	write32(SMC_BASE + 0x84, 0);
+  */
+
+  // Wait for the SMC to tell us that it's ready to send a message
+	while (!(IO_BSWAP_READ(32, SMC_BASE+0x04) & 4));
+	IO_BSWAP_WRITE(32, SMC_BASE+0x04, 4);
+  *REG32(SMC_BASE) = *(uint32_t*)(msg + 0);
+  printf("msg0: 0x%lX\n", *(uint32_t*)(msg + 0));
+  *REG32(SMC_BASE) = *(uint32_t*)(msg + 4);
+  printf("msg4: 0x%lX\n", *(uint32_t*)(msg + 4));
+  *REG32(SMC_BASE) = *(uint32_t*)(msg + 8);
+  printf("msg8: 0x%lX\n", *(uint32_t*)(msg + 8));
+  *REG32(SMC_BASE) = *(uint32_t*)(msg + 12);
+  printf("msg12: 0x%lX\n", *(uint32_t*)(msg + 12));
+	IO_BSWAP_WRITE(32, SMC_BASE+0x04, 0);
+}
+
+
+status_t smc_recieve_message(uint8_t *msg) {
+  // Can we get a message? If so, get it
+	if (IO_BSWAP_READ(32, SMC_BASE+0x14) & 4) {
+    IO_BSWAP_WRITE(32, SMC_BASE+0x14, 4);
+		for (int i = 0; i < 4; ++i)
+			*(uint32_t*)(msg + (i * 4)) = *REG32(SMC_BASE+0x10);
+    IO_BSWAP_WRITE(32, SMC_BASE+0x14, 0);
+    return NO_ERROR;
+  }
+  return ERR_NO_MSG;
+}
+
+void smc_handle_bulk(unsigned char *msg) {
+	switch (msg[1]) {
+	case 0x11:
+	case 0x20:
+		printf("SMC power message\n");
+		break;
+	case 0x23:
+		printf("IR RX [%02x %02x]\n", msg[2], msg[3]);
+		break;
+	case 0x60 ... 0x65:
+		
+		printf("DVD cover state: %02x\n", msg[1]);
+		break;
+	default:
+		printf("unknown SMC bulk msg: %02x\n", msg[1]);
+		break;
+	}
+}
+
+status_t smc_recieve_response(uint8_t *msg) {
+	while (1) {
+		if (smc_recieve_message(msg))
+			continue;
+		if (msg[0] == 0x83) {
+			smc_handle_bulk(msg);
+			continue;
+		}
+		return NO_ERROR;
+	}
+  return ERR_NO_MSG;
+}
+
+void platform_halt(platform_halt_action suggested_action, platform_halt_reason reason) {
+  switch (suggested_action) {
+  case HALT_ACTION_HALT:
+    break;
+  case HALT_ACTION_REBOOT: {
+    uint8_t buf[16] = { 0x82, 0x04, 0x12, 0x00 };
+    smc_send_message(buf);
+  } break;
+  case HALT_ACTION_SHUTDOWN: {
+    uint8_t buf[16] = { 0x82, 0x01 };
+    smc_send_message(buf);
+  } break;
+  }
+
+  const char *reason_string = platform_halt_reason_string(reason);
+  dprintf(ALWAYS, "HALT: spinning forever, reason '%s'\n", reason_string);
+  arch_disable_ints();
+  for (;;)
+      arch_idle();
 }
 
 uint32_t kbhit(void) {
   uint32_t status;
   do {
-    status = *REG32(UART_BASE+0x18);
+    status = *REG32(UART_BASE+0x08);
   } while (status & ~0x03000000);
 
   return !!(status & (1<<24));
@@ -64,7 +164,7 @@ uint32_t kbhit(void) {
 
 int platform_dgetc(char *c, bool wait) {
   while (!kbhit());
-  *c = (*REG32(UART_BASE+0x10)) >> 24;
+  *c = (*REG32(UART_BASE)) >> 24;
   return -0;
 }
 
@@ -262,5 +362,76 @@ static int cmd_f(int argc, const console_cmd_args *argv) {
   printf("0x%llx 0x%llx 0x%llx\n", b[0], b[1], b[2]);
   printf("0x%llx 0x%llx 0x%llx\n", c[0], c[1], c[2]);
   printf("%f + %f -> %f\n", a[0], a[1], *(double*)c);
+  return 0;
+}
+
+static int cmd_smc(int argc, const console_cmd_args *argv) {
+  if (argc < 2) {
+    printf("not enough arguments:\n");
+usage:
+    printf("%s test : manually constructs a buffer\n", argv[0].str);
+    printf("%s recieve : recieves an message from the SMC\n", argv[0].str);
+    printf("%s recieve_response : recieves a message response from the SMC\n", argv[0].str);
+    printf("%s send [1-16 byte block] : sends a message to the SMC\n", argv[0].str);
+    printf("%s send_recieve [1-16 byte block] : sends a message to the SMC, then recieves the data\n", argv[0].str);
+
+    return -1;
+  }
+
+  if (!strcmp(argv[1].str, "test")) {
+    uint8_t msg[16] = { 0x82, 0x04, 0x12, 0x00 };
+    smc_send_message(msg);
+  } else if (!strcmp(argv[1].str, "recieve")) {
+    uint8_t msg[16] = {};
+    smc_recieve_message(msg);
+    for (int i=0; i<sizeof(msg); i++) {
+      printf("0x%lx ", msg[i]);
+    }
+    puts("");
+  } else if (!strcmp(argv[1].str, "recieve_response")) {
+    uint8_t msg[16] = {};
+    smc_recieve_response(msg);
+    for (int i=0; i<sizeof(msg); i++) {
+      printf("0x%lx ", msg[i]);
+    }
+    puts("");
+  } else if (!strcmp(argv[1].str, "send")) {
+    if (argc-2 > 16) {
+      printf("too many arguments!\n");
+      goto usage;
+    }
+    else if (argc-2 <= 0) {
+      printf("not enough arguments!\n");
+      goto usage;
+    }
+    uint8_t msg[16] = {};
+    for (int i=0; i<argc-2; i++) {
+      msg[i] = argv[i+2].u;
+    }
+    smc_send_message(msg);
+  } else if (!strcmp(argv[1].str, "send_recieve")) {
+    if (argc-2 > 16) {
+      printf("too many arguments!\n");
+      goto usage;
+    }
+    else if (argc-2 <= 0) {
+      printf("not enough arguments!\n");
+      goto usage;
+    }
+    uint8_t msg[16] = {};
+    for (int i=2; i<argc; i++) {
+      msg[i-2] = argv[i].u;
+    }
+    smc_send_message(msg);
+    smc_recieve_response(msg);
+    for (int i=0; i<sizeof(msg); i++) {
+      printf("0x%lx ", msg[i]);
+    }
+    puts("");
+  } else {
+    printf("unrecognized subcommand!\n");
+    goto usage;
+  }
+
   return 0;
 }

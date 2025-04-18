@@ -6,7 +6,7 @@ MODULES += app/shell
 #MODULES += app/tests
 #MODULES += lib/debugcommands
 MODULES += lib/gfx
-MODULES += lib/gfxconsole
+#MODULES += lib/gfxconsole
 
 DEBUG := 2
 # WITH_TESTS := false
