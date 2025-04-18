@@ -4,7 +4,9 @@
 #include <lk/debug.h>
 
 static inline void arch_enable_ints(void) {
-  __asm__ volatile("mtmsrd %0, 1": : "r"(0x200 | 0x8000));
+  // TODO, only actually enable interrupts, when the codebase is ready to accept them
+  // Xell leaves the decrementer ticking, and will rudely interrupt/crash things
+  //__asm__ volatile("mtmsrd %0, 1": : "r"(0x200 | 0x8000));
 }
 static inline void arch_disable_ints(void) {
   __asm__ volatile("mtmsrd %0, 1": : "r"(0x200));
