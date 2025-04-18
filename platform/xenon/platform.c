@@ -255,11 +255,12 @@ static int cmd_x(int argc, const console_cmd_args *argv) {
 void test1(uint64_t *a, uint64_t *b, uint64_t *c);
 
 static int cmd_f(int argc, const console_cmd_args *argv) {
-  uint64_t a[] = { 0x11, 0x22 };
+  double a[] = { 1.0, 2.14 };
   uint64_t b[3];
   uint64_t c[3];
   test1(a, b, c);
   printf("0x%llx 0x%llx 0x%llx\n", b[0], b[1], b[2]);
   printf("0x%llx 0x%llx 0x%llx\n", c[0], c[1], c[2]);
+  printf("%f + %f -> %f\n", a[0], a[1], *(double*)c);
   return 0;
 }
