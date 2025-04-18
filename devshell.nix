@@ -1,6 +1,7 @@
 { stdenv
 , cdrtools
 , dtc
+, elf-converter
 , enableDebugging
 , gdb
 , nodejs
@@ -25,6 +26,7 @@ stdenv.mkDerivation {
     dtc
     gdb
     nodejs
+    elf-converter
     pkgsCross.ppc-embedded.stdenvNoLibs.cc
     pkgsCross.ppc64.stdenv.cc
     (enableDebugging (qemu.override { hostCpuTargets = [ "ppc64-softmmu" "ppc-softmmu" ]; }))
