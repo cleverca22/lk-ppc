@@ -4,8 +4,9 @@ TARGET := xenon-ppc64-stage1
 
 MODULES += app/shell
 #MODULES += app/tests
-#MODULES += lib/debugcommands
+MODULES += lib/debugcommands
 MODULES += lib/gfx
+MODULES += unittest
 #MODULES += lib/gfxconsole
 
 DEBUG := 2
